@@ -2,41 +2,39 @@ const express = require("express");
 const router = express.Router();
 const fs = require("fs");
 
-router.get("/", (req, res) => {
-    fs.readFile("./db/db.json", "utf8", (err, data) => {
-      if (err) {
-        throw err;
-      } else {
-        const notes = JSON.parse(data);
-        res.json(notes);
-      }
-    });
-  });
+app.get('/api/notes', (req, res) => {
+  res.sendFile(path.join(__dirname, '../db/db.json'));
+});
+
+app.post('/api/notes', (req, res) => {
+  let db = fs.readFileSync('db/db.json');
+  db = JSON.parse(db);
+  res.json(db);
+  // creating body for note
+  let userNote = {
+    title: req.body.title,
+    text: req.body.text,
+  };
+  // pushing created note to be written in the db.json file
+  db.push(userNote);
+  fs.writeFileSync('db/db.json', JSON.stringify(db));
+  res.json(db);
+
+});
+
+
+// DELETE /api/notes/:id should receive a query parameter containing the id of a note to delete.
+app.delete('/api/notes/:id', (req, res) => {
+  // reading notes form db.json
+  let db = JSON.parse(fs.readFileSync('db/db.json'))
+  // removing note with id
+  let deleteNotes = db.filter(item => item.id !== req.params.id);
+  // Rewriting note to db.json
+  fs.writeFileSync('db/db.json', JSON.stringify(deleteNotes));
+  res.json(deleteNotes);
   
-  router.post("/", (req, res) => {
-    console.log(req.body);
-    const newNote = {
-      title: req.body.title,
-      text: req.body.text,
-    };
-    fs.readFile("./db/db.json", "utf8", (err, data) => {
-      if (err) {
-        throw err;
-      } else {
-        const notes = JSON.parse(data);
-        notes.push(newNote);
-        fs.writeFile(
-          "./db/db.json",
-          JSON.stringify(notes, null, 4),
-          (err, data) => {
-            if (err) {
-              throw err;
-            }
-            res.json({ data: req.body, message: "success!" });
-          }
-        );
-      }
-    });
-  });
+})
+};
+
   
 module.exports = router;
